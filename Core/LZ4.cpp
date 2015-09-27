@@ -96,8 +96,6 @@ namespace LZ4
 		/// Create decomp array
 		this->dataArray = new char[fSize];
 
-		std::cout << fSize - inSize << std::endl;
-
 		if (fSize == inSize - sizeof(int))
 		{
 			memcpy(this->dataArray, src + sizeof(int), fSize);
