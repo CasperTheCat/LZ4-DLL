@@ -403,7 +403,7 @@ namespace LZ4
 		virtual ~Processor();
 		// More abstraction
 		int compress(const char* src, int inSize); /// Using compress limitedOutput
-		int decompress(const char* src, int inSize); /// Using safe decomp
+		int decompress(char* src, int inSize); /// Using safe decomp
 		char *ptr() const;
 		int flush(); /// Flushs internal data pointer. Wipes external pointers too.
 		long long len() const;

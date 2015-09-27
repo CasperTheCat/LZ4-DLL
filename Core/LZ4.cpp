@@ -1,4 +1,5 @@
 #include "Core.h"
+#include <iostream>
 
 namespace LZ4
 {
@@ -60,28 +61,36 @@ namespace LZ4
 		this->isInit = true;
 
 		/// Create Temporary locale for data
-		this->dataArray = new char[inSize];
+		this->dataArray = new char[inSize + sizeof(int)];
+
+		/// Memcpy size to array
+		memcpy(this->dataArray, &inSize, sizeof(int));
 
 		/// Call Function - DO NOT EXPAND THE FILE
-		this->dataLength = LZ4_compress_limitedOutput(src, this->dataArray, inSize, inSize);
+		this->dataLength = sizeof(int) + LZ4_compress_limitedOutput(src, this->dataArray + 4, inSize, inSize);
 		
 		/// Feedback
-		return this->dataLength;
+		return this->dataLength - sizeof(int);
 	}
 
 	//////////////////////////////////////////////////
 	// Outer Facing Decompression
 	//
-	int Processor::decompress(const char* src, int inSize)
+	int Processor::decompress(char* src, int inSize)
 	{
 		if (this->isInit) delete this->dataArray;
 		this->isInit = true;
 
+		/// Get Array size
+		int fSize;
+		memcpy(&fSize,src,sizeof(int));
+		std::cout << fSize << std::endl;
+
 		/// Create decomp array
-		this->dataArray = new char[inSize * 10];
+		this->dataArray = new char[fSize];
 
 		/// Call Function
-		this->dataLength = LZ4_decompress_safe(src, this->dataArray, inSize, inSize * 10);
+		this->dataLength = LZ4_decompress_safe(src + sizeof(int), this->dataArray, inSize - sizeof(int), fSize);
 
 		/// Feedback
 		return this->dataLength;
