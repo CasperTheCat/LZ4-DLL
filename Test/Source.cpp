@@ -78,12 +78,15 @@ int main(int argc, char **argv)
 
 	auto lz4Proc = new LZ4::Processor();
 
+	unsigned long long fSizeTotal = 0;
+	unsigned long long oSizeTotal = 0;
+	unsigned int filesTotal = 0;
 	std::ifstream fIn;
 	std::ofstream fOut;
 	size_t fBeg, fEnd;
 	std::string oName;
 	std::string::size_type pAt;
-	bool bIsCompressed,bFailureState = false;
+	bool bIsCompressed;
 	char *data;
 
 	while (fileQueue->size() > 0)
@@ -111,8 +114,7 @@ int main(int argc, char **argv)
 		{
 			if (lz4Proc->decompress(data, int(fEnd - fBeg)) == 0)
 			{
-				std::cout << "[INFO] File " << oName << " was not compressed!" << std::endl;
-				continue;
+				std::cout << "[INFO] File " << oName << " was not compressed" << std::endl;
 			}
 			pAt = oName.find_last_of('.');
 			oName = oName.substr(0, pAt);
@@ -123,7 +125,6 @@ int main(int argc, char **argv)
 			if (lz4Proc->compress(data, int(fEnd - fBeg)) == 0)
 			{
 				std::cout << "[INFO] File " << oName << " did not compress" << std::endl;
-				bFailureState = true;
 			} 
 			else
 			{
@@ -133,13 +134,10 @@ int main(int argc, char **argv)
 		
 		fOut.open(oName, std::ios::binary);
 		if (!fOut.is_open()) continue;
-
-		if (bFailureState)
 		{
-			fOut.write(data, (fEnd - fBeg) + 4);
-		}
-		else
-		{
+			fSizeTotal += (fEnd - fBeg);
+			oSizeTotal += lz4Proc->len();
+			filesTotal++;
 			fOut.write(lz4Proc->ptr(), lz4Proc->len());
 		}
 		delete data;
@@ -148,6 +146,7 @@ int main(int argc, char **argv)
 
 	delete fileQueue;
 
+	std::cout << std::endl << std::endl << "Final Ratio: " << float(fSizeTotal) / float(oSizeTotal) << "x compression over a total of " << filesTotal << " files" << std::endl;
 
 	getchar();
 	return 0;

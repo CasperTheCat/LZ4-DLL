@@ -73,6 +73,7 @@ namespace LZ4
 		{
 			memcpy(this->dataArray + sizeof(int), src, inSize);
 			this->dataLength = inSize + sizeof(int);
+			return 0;
 		}
 		
 		/// Feedback
@@ -95,11 +96,12 @@ namespace LZ4
 		/// Create decomp array
 		this->dataArray = new char[fSize];
 
-		std::cout << fSize << " vs " << inSize << std::endl;
+		std::cout << fSize - inSize << std::endl;
 
 		if (fSize == inSize - sizeof(int))
 		{
-			memcpy(this->dataArray, src, fSize);
+			memcpy(this->dataArray, src + sizeof(int), fSize);
+			this->dataLength = fSize;
 			return 0;
 		}
 
