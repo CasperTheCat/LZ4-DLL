@@ -1,6 +1,7 @@
 #include "../Core/Core.h"
 #include "Queue.h"
 #include <iostream>
+#include <boost/algorithm/string/predicate.hpp>
 
 //////////////////////////////////////////////////
 // Global Queue
@@ -81,11 +82,17 @@ int main(int argc, char **argv)
 	std::ofstream fOut;
 	size_t fBeg, fEnd;
 	std::string oName;
+	std::string::size_type pAt;
+	bool bIsCompressed;
 	char *data;
 
 	while (fileQueue->size() > 0)
 	{
+		// FIRST THINGS
 		oName = fileQueue->accPop().string();
+		bIsCompressed = boost::algorithm::ends_with(oName,".lz4");
+	
+
 		fIn.open(oName,std::ios::binary);
 		if (!fIn.is_open())
 		{
@@ -101,17 +108,22 @@ int main(int argc, char **argv)
 		fIn.close();
 
 		std::cout << "File is " << fEnd - fBeg << std::endl;
-
-		lz4Proc->compress(data, int(fEnd - fBeg));
+		if (bIsCompressed)
+		{
+			lz4Proc->decompress(data, int(fEnd - fBeg));
+			pAt = oName.find_last_of('.');
+			oName = oName.substr(0, pAt);
+		}
+		else
+		{
+			lz4Proc->compress(data, int(fEnd - fBeg));
+			oName = oName + ".lz4";
+		}
 		delete data;
-
-		oName = oName + ".lz4";
-		fOut.open(oName, std::ios::binary);
-		
 		if (lz4Proc->len() == 0) continue;
-
 		std::cout << lz4Proc->len() << std::endl;
 
+		fOut.open(oName, std::ios::binary);
 		if (!fOut.is_open()) continue;
 		fOut.write(lz4Proc->ptr(), lz4Proc->len());
 		fOut.close();

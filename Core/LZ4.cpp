@@ -17,7 +17,7 @@ namespace LZ4
 	//
 	Processor::~Processor()
 	{
-
+		if (this->isInit) delete this->dataArray;
 	}
 
 	//////////////////////////////////////////////////
@@ -78,10 +78,10 @@ namespace LZ4
 		this->isInit = true;
 
 		/// Create decomp array
-		this->dataArray = new char[inSize * 4];
+		this->dataArray = new char[inSize * 10];
 
 		/// Call Function
-		this->dataLength = LZ4_decompress_safe(src, this->dataArray, inSize, inSize * 4);
+		this->dataLength = LZ4_decompress_safe(src, this->dataArray, inSize, inSize * 10);
 
 		/// Feedback
 		return this->dataLength;
