@@ -68,6 +68,12 @@ namespace LZ4
 
 		/// Call Function - DO NOT EXPAND THE FILE
 		this->dataLength = sizeof(int) + LZ4_compress_limitedOutput(src, this->dataArray + 4, inSize, inSize);
+
+		if (this->dataLength == sizeof(int))
+		{
+			memcpy(this->dataArray + sizeof(int), src, inSize);
+			this->dataLength = inSize + sizeof(int);
+		}
 		
 		/// Feedback
 		return this->dataLength - sizeof(int);
@@ -88,6 +94,14 @@ namespace LZ4
 
 		/// Create decomp array
 		this->dataArray = new char[fSize];
+
+		std::cout << fSize << " vs " << inSize << std::endl;
+
+		if (fSize == inSize - sizeof(int))
+		{
+			memcpy(this->dataArray, src, fSize);
+			return 0;
+		}
 
 		/// Call Function
 		this->dataLength = LZ4_decompress_safe(src + sizeof(int), this->dataArray, inSize - sizeof(int), fSize);

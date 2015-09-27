@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 	size_t fBeg, fEnd;
 	std::string oName;
 	std::string::size_type pAt;
-	bool bIsCompressed;
+	bool bIsCompressed,bFailureState = false;
 	char *data;
 
 	while (fileQueue->size() > 0)
@@ -107,27 +107,43 @@ int main(int argc, char **argv)
 		fIn.read(data, fEnd - fBeg);
 		fIn.close();
 
-		std::cout << "File is " << fEnd - fBeg << std::endl;
 		if (bIsCompressed)
 		{
-			lz4Proc->decompress(data, int(fEnd - fBeg));
+			if (lz4Proc->decompress(data, int(fEnd - fBeg)) == 0)
+			{
+				std::cout << "[INFO] File " << oName << " was not compressed!" << std::endl;
+				continue;
+			}
 			pAt = oName.find_last_of('.');
 			oName = oName.substr(0, pAt);
 		}
 		else
 		{
-			lz4Proc->compress(data, int(fEnd - fBeg));
 			oName = oName + ".lz4";
+			if (lz4Proc->compress(data, int(fEnd - fBeg)) == 0)
+			{
+				std::cout << "[INFO] File " << oName << " did not compress" << std::endl;
+				bFailureState = true;
+			} 
+			else
+			{
+				std::cout << "Achieved " << (fEnd - fBeg) / float(lz4Proc->len()) << "x compression" << std::endl;
+			}
 		}
-		delete data;
-		if (lz4Proc->len() == 0) continue;
-		std::cout << lz4Proc->len() << std::endl;
-
+		
 		fOut.open(oName, std::ios::binary);
 		if (!fOut.is_open()) continue;
-		fOut.write(lz4Proc->ptr(), lz4Proc->len());
-		fOut.close();
 
+		if (bFailureState)
+		{
+			fOut.write(data, (fEnd - fBeg) + 4);
+		}
+		else
+		{
+			fOut.write(lz4Proc->ptr(), lz4Proc->len());
+		}
+		delete data;
+		fOut.close();
 	}
 
 	delete fileQueue;
